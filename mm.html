@@ -1,0 +1,66 @@
+<!DOCTYPE html>  
+<html>  
+<head lang="en">  
+    <meta charset="UTF-8">  
+    <title>Box Click Box Move//捕获鼠标点击位置并将元素移动到该位置</title>  
+    <style type="text/css">  
+        #info{  
+            width: 100px;  
+            height: 100px;  
+            background-color: #ff0000;  
+            position: absolute;  
+            top:0;  
+            left:0;  
+        }  
+  
+    </style>  
+</head>  
+<body>  
+    <div id="info"></div>  
+    <script>  
+        window.onload = function(){  
+            console.log("不支持ie7--对style使用了setAttribute");  
+            console.log('捕获鼠标点击位置并将元素移动到该位置');  
+            console.log('MOzilla 对事件的对象提供很好的文档，参见https://developer.mozilla.org/En/DOM/Event');  
+            document.onclick = processClick;  
+        }  
+  
+        function processClick(evt){  
+            //输出evt 的值 ，查看event对象  
+            console.log(evt);  
+            //window使用window对象访问event,其他 将Event对象作为事件处理程序的一个参数传递  
+            evt = evt || window.event;  
+            var x=0;  
+            var y=0;  
+            //其他浏览器(非ie)使用pageX  
+            if(evt.pageX){  
+                x = evt.pageX;  
+                y = evt.pageY;  
+                //（ie浏览器使用clientX,且要考虑偏移值）  
+            }else if(evt.clientX){  
+                var offsetX = 0;  
+                var offsetY = 0;  
+                //ie 6 版本以上使用  
+                if(document.documentElement.scrollLeft){  
+                    offsetX = document.documentElement.scrollLeft;  
+                    offsetY = document.documentElement.scrollTop;  
+                    // ie 6 比较旧的版本  
+                }else if(document.body){  
+                    offsetX = document.body.scrollLeft;  
+                    offsetY = document.body.scrollTop;  
+                }  
+                x = evt.clientX + offsetX;  
+                y = evt.clientY + offsetY;  
+            }  
+  
+            var style = "left:"+ x + "px; top : "+ y + "px";  
+            console.log(style);  
+            var box = document.getElementById('info');  
+            box.setAttribute('style',style);  
+        }  
+  
+  
+  
+    </script>  
+</body>  
+</html>  

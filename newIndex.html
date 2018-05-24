@@ -1,6 +1,13 @@
-<!DOCTYPE html>  
-<meta charset="utf-8">  
-<title>Spline Editor</title>  
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Page Title</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
 <style>  
   
     body {  
@@ -8,13 +15,20 @@
         position: relative;  
         /* width: 960px;  
         height: 500px;   */
+    }
+    ul,
+    li {
+        list-style: none;
+        margin: 0;
+        padding: 0;
     }  
   
     form {  
         position: absolute;  
         bottom: 10px;  
         left: 10px;  
-    }
+    }  
+  
   
     circle,  
     .line {  
@@ -32,65 +46,108 @@
     .selected {  
         fill: #FF6666;  
         stroke: #ff7f0e;  
-    } 
-    ul, li {list-style: none;}
-    li {cursor: pointer;} 
+    }
+
+    #mapCanvas {width: 1280px; display: inline-block; vertical-align: top;}
+    #mapCanvas svg {border: 1px solid #0000FF;}
+
+    #pointList {
+        /* position: absolute;
+        right: 0;
+        bottom: 10px; */
+        display: inline-block;
+        width: 250px;
+        border: 1px solid #ddd;
+        border-bottom: 0 none;
+        background: #eee;
+        vertical-align: top;
+    }
+
+    #pointList li {
+        cursor: pointer;
+        padding: 4px 8px;
+        border-bottom: 1px solid #ddd;
+    }  
   
 </style>
-<form>
-    <ul id="dragList">
-        <li>point1</li>
-        <li>point2</li>
-        <li>point3</li>
-        <li>point4</li>
-        <li>point5</li>
-        <li>point6</li>
-    </ul>
+<body>
+    
+<div id="mapCanvas">
+    
+</div>
+<ul id="pointList">
+    <li>
+        <button>point1</button>
+    </li>
+    <li>
+        <button>point2</button>
+    </li>
+    <li>
+        <button>point3</button>
+    </li>
+    <li>
+        <button>point4</button>
+    </li>
+    <li>
+        <button>point5</button>
+    </li>
+    <li>
+        <button>point6</button>
+    </li>
+</ul>
+<form>  
     <label for="interpolate">样式:</label>  
     <select id="interpolate"></select><br>  
   
-    <input type='button' class='btn-text' id='gis_del' value='删除' />  
-    <input type='button' class='btn-text' id='gis_edit' value='编辑' />  
-    <input type='button' class='btn-text' id='drag_circle' value='画点' />  
-    <input type='button' class='btn-text' id='drag_line' value='画线' />  
+    <input type='button' class='btn-text' id ='gis_del' value='删除' />  
+    <input type='button' class='btn-text' id ='gis_edit' value='编辑' />  
+    <input type='button' class='btn-text' id ='drag_line' value='绘线' />  
 </form>
+
+
+</body>
+
 <script src="./js/jq.js"></script>
 <script src="http://d3js.org/d3.v3.min.js"></script> 
 
-<script>  
-  
-    // var width = 960,  
-    //     height = 500;
-
+<script>
     var margin = {top: -5, right: -5, bottom: -5, left: -5},
         width = 1280 - margin.left - margin.right,
         height = 768 - margin.top - margin.bottom;
   
-    var points = []  
-
-    var dragged = null;     // 拖拽的点位  
-    var selected = points[0];   // 当前选中的点位  
-    var lineSelect = false;  // 线路选中  
+    var points = []
+    var balls = []  
+    var dragged = null;     //拖拽的热点  
+    var selected = points[0];   //当前选中的热点  
+    var lineSelect = false; //线路选中  
   
-    var isDrawingLine = false;  // 是否编辑状态  
-    var gis_edit = false;  
+    var isDrawingLine = false;  
+    var gis_edit = false;
 
-    // 拖拽安放
-    $("#dragList li").on('click', function(){  
-        mousedown()
+    var isHot = false;  // 是否是线上点位
+    var movePointFlag = null;
+  
+
+    $('#pointList li button').on('mousedown', function (event) {
+        // this.mousemove = function() {
+            movePointFlag = true
+            drawHotPoint();
+        // }
+        this.mouseup = function() {
+          movePointFlag = false
+            dragged = null;  
+        }
     });
   
     // 绘图
     $("#drag_line").click(function(){  
-        drowLines()
-    });
-    $("#drag_circle").click(function(){  
         if(isDrawingLine){
             isDrawingLine = false;  
         }else {  
             isDrawingLine = true;  
-        }
-    });
+        }  
+  
+    });  
   
     // 编辑图片
     $("#gis_edit").click(function(){  
@@ -108,39 +165,30 @@
     // 清空画布
     $("#gis_del").click(function(){
         points = [];  
-        d3.selectAll("circle").remove();  
-        d3.select("path").remove()
-        // redraw();
+        redraw();
     });
-
     var zoom = d3.behavior.zoom()
     .scaleExtent([1, 10])
     .on("zoom", zoomed);
-
     var drag = d3.behavior.drag()
         .origin(function(d) { return d; })
         .on("dragstart", dragstarted)
         .on("drag", dragged)
         .on("dragend", dragended);
-
     // ===================================  ================================= //
   
     var line = d3.svg.line();  
   
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("#mapCanvas").append("svg")
             .attr("width", width)  
             .attr("height", height) 
             // .attr("tabindex", 1)
-            // .call(zoom).on('dblclick.zoom', null)  // 禁用双击缩放
-            // .on("mousedown", mousedown)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
             // .call(zoom)
-            .call(zoom).on('dblclick.zoom', null)  // 禁用双击缩放
+            .call(zoom).on('dblclick.zoom', null)
             .on("mousedown", mousedown);
-
   var container = svg.append("g");
-
   container.attr("class", "ba-image")
         .append("image")
         .attr("xlink:href", "./static/bg.jpg")
@@ -148,10 +196,9 @@
         .attr("y", "0")
         .attr("width", width)
         .attr("height", height)
-
   // container.append("g")
   //       .append("path")
-    svg.append("path")  
+  container.append("path")  
           .datum(points)  
           .attr("class", "line")  
           .call(redraw);  
@@ -162,19 +209,6 @@
             .on("keydown", keydown)
             .on("dblclick", dblclick);  
   
-/* linear - 线性插值
-linear-closed - 线性插值，封闭起点和终点形成多边形
-step - 步进插值，曲线只能沿x轴和y轴交替伸展
-step-before - 步进插值，曲线只能沿y轴和x轴交替伸展
-step-after - 同step
-basis - B样条插值
-basis-open - B样条插值，起点终点不相交
-basis-closed - B样条插值，连接起点终点形成多边形
-bundle - 基本等效于basis，除了有额外的tension参数用于拉直样条
-cardinal - Cardina样条插值
-cardinal-open - Cardina样条插值，起点终点不相交
-cardinal-closed - Cardina样条插值，连接起点终点形成多边形
-monotone - 立方插值，保留y方向的单调性 */
     d3.select("#interpolate")  
             .on("change", change)  
             .selectAll("option")  
@@ -194,8 +228,7 @@ monotone - 立方插值，保留y方向的单调性 */
             .attr("value", function(d) { return d; })  
             .text(function(d) { return d; });  
   
-    svg.node().focus();  
-
+    container.node().focus();  
 // ================================ zoom drag ============================= //
 d3.tsv("dots.tsv", dottype, function(error, dots) {
   dot = container.append("g")
@@ -208,31 +241,28 @@ d3.tsv("dots.tsv", dottype, function(error, dots) {
       .attr("cy", function(d) { return d.y; })
       .call(drag);
 });
-
 function dottype(d) {
   d.x = +d.x;
   d.y = +d.y;
   return d;
 }
-
-// 全图层缩放
 function zoomed() {
-  svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  // if(points.length > 0) {
+  //   return;
+  // }
+  // console.log(container)
+  container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 }
-
 function dragstarted(d) {
   d3.event.sourceEvent.stopPropagation();
   d3.select(this).classed("dragging", true);
 }
-
 function dragged(d) {
   d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
 }
-
 function dragended(d) {
   d3.select(this).classed("dragging", false);
 }
-
 // ================================ zoom drag ============================= //
     // 点击线路，开启编辑模式  
     function lineOnClick() {  
@@ -241,22 +271,36 @@ function dragended(d) {
                     .style("stroke-dasharray","10 5")
             drawHotPoint();  
         }  
-    }  
-  
-    // 绘制线路拖动点  
-    function  drawHotPoint() {  
-        svg.selectAll("circle")  
-                .data(points, function(d) { return d; })  
+    }
+
+    // 线上点位
+    function  drawHotPoint() {
+      isHot = true
+      container.selectAll("circle")  
+                .data(balls, function(d) { return d; })  
                 .enter().append("circle")  
                 .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
                 .attr("r", 6.5)  
                 .attr("cx", function(d) { return d[0]; })  
+                .attr("cy", function(d) { return d[1]; });
+      
+    }
+  
+    /* // 绘制线路拖动点  
+    function  drawLinePoint() {  
+      container.selectAll("circle")  
+                .data(points, function(d) { return d; })  
+                .enter().append("circle")  
+                .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
+                .attr("r", 1)  
+                .attr("cx", function(d) { return d[0]; })  
                 .attr("cy", function(d) { return d[1]; });  
-    }  
-
-    function drowLines() {
-        // line(points)
-        svg.select("path")
+    } */  
+  
+    // 重新绘制折线  
+    function redraw() {
+      if(!isHot) {
+        container.select("path")  
                 .attr("d", function (d,i) {  
                     return line(points);  
                 })  
@@ -270,35 +314,20 @@ function dragended(d) {
                     d3.select(this).style("stroke-width",1)  
                     lineSelect = false  
                 });
-    }
+      // } 
+        
   
-    // 重新绘制折线  
-    function redraw() {  
-        /* svg.select("path")  
-                .attr("d", function (d,i) {  
-                    return line(points);  
-                })  
-                .style("stroke-dasharray","10 5")  
-                .on("click", lineOnClick)      //全局鼠标点击  
-                .on("mouseover", function(d,i) {  
-                    d3.select(this).style("stroke-width",3)  
-                    lineSelect = true  
-                })  
-                .on("mouseout", function(d,i) {  
-                    d3.select(this).style("stroke-width",1)  
-                    lineSelect = false  
-                }); */  
-  
-        var circle = svg.selectAll("circle")  
+        var circle = container.selectAll("circle")  
                 .data(points, function(d) { return d; });  
   
+        var radius = isHot ? 6.5 : 1;
         circle.enter().append("circle")  
                 .attr("r", 1e-6)  
                 .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
                 .transition()  
                 .duration(750)  
                 .ease("elastic")  
-                .attr("r", 6.5);  
+                .attr("r", radius);
   
         circle  
                 .classed("selected", function(d) { return d === selected; })  
@@ -318,33 +347,38 @@ function dragended(d) {
         redraw();  
     }  
   
-    //鼠标点击--增加一个新点位  
+    //鼠标点击--增加一个新热点  
     function mousedown() {
         //没有开启编辑  
         if(!isDrawingLine) return;
-        points.push(selected = dragged = d3.mouse(svg.node()));  
+        points.push(selected = dragged = d3.mouse(container.node()));  
         redraw();  
     }
-
     // 双击结束绘制
     function dblclick() {
       isDrawingLine = false;
     }
   
-    //鼠标移动--拖动点位  
-    function mousemove() {  
+    //鼠标移动--拖动热点  
+    function mousemove() {
+        // movePointFlag = false 
         if (!dragged) return;  
-        var m = d3.mouse(svg.node());  
+        var m = d3.mouse(container.node());  
         dragged[0] = Math.max(0, Math.min(width, m[0]));  
         dragged[1] = Math.max(0, Math.min(height, m[1]));  
         redraw();  
     }  
   
     //鼠标抬起-停止移动  
-    function mouseup() {  
+    function mouseup() {
+      /* if(movePointFlag) {
+        points.push(selected = dragged = d3.mouse(container.node()));
+        redraw();
+      } else { */
         if (!dragged) return;  
         mousemove();  
-        dragged = null;  
+        dragged = null;
+      // }
     }  
   
     //处理键盘事件  
@@ -360,6 +394,6 @@ function dragended(d) {
                 break;  
             }  
         }  
-    }  
-  
-</script>  
+    }
+</script>
+</html>  
