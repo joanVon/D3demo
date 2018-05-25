@@ -95,7 +95,7 @@
 <div id="mapCanvas">
     
 </div>
-<ul id="pointList">
+<!-- <ul id="pointList">
     <li>
         <button>point1</button>
     </li>
@@ -114,7 +114,7 @@
     <li>
         <button>point6</button>
     </li>
-</ul>
+</ul> -->
 <div class="opt-bar">  
     <label for="interpolate">样式:</label>  
     <select id="interpolate"></select><br>  
@@ -140,13 +140,19 @@
         width = 1280 - margin.left - margin.right,
         height = 768 - margin.top - margin.bottom;
   
-    var points = [
-      
+    var points = []
+    var balls = [
+      {id: 1, name: 'c1'},
+      {id: 2, name: 'c2'},
+      {id: 3, name: 'c3'},
+      {id: 4, name: 'c4'},
+      {id: 5, name: 'c5'}
     ]
-    var balls = []  
-    var dragged = null;     //拖拽的热点  
-    var selected = points[0];   //当前选中的热点  
-    var lineSelect = false; //线路选中  
+    
+    var newPP = []
+    var dragged = null;     // 拖拽的热点  
+    var selected = points[0];   // 当前选中的热点  
+    var lineSelect = false; // 线路选中  
   
     var isDrawingLine = false;  
     var gis_edit = false;
@@ -221,46 +227,46 @@
     });
 
     // 定义菜单选项
-    var userMenuData = [
-      [{
-          text: "删除",
-          func: function () {
-            //
-            console.log($(this))
+    // var userMenuData = [
+    //   [{
+    //       text: "删除",
+    //       func: function () {
+    //         //
+    //         console.log($(this))
 
-            var c_x = Number($(this).attr('cx'))
-            var c_y = Number($(this).attr('cy'))
-            var c_point = [c_x, c_y];
-            d3.selectAll("circle.selected").remove();  
-            $(this).remove();
+    //         var c_x = Number($(this).attr('cx'))
+    //         var c_y = Number($(this).attr('cy'))
+    //         var c_point = [c_x, c_y];
+    //         d3.selectAll("circle.selected").remove();  
+    //         $(this).remove();
 
-            // var c_index = $.inArray(c_point, points);
-            // points.splice($.inArray(c_point, points), 1);
+    //         // var c_index = $.inArray(c_point, points);
+    //         // points.splice($.inArray(c_point, points), 1);
 
-            var c_index;
-            $.each(points, function(key, point) {
-              if(points[key][0] == c_point[0] && points[key][1] == c_point[1]) {
-                c_index = key
-              }
-            });
-            points.splice(c_index, 1)
-            // console.log(points)
-          }
-        }/* ,
-        {
-          text: "菜单2",
-          func: function () {
-            var id = Number($(this).attr("id"))
-            alert("菜单1", id)
-          }
-        } */
-      ]
-    ];
-    // 事件监听方式添加事件绑定
-    $("body").smartMenu(userMenuData, {
-      name: "chatRightControl",
-      container: "circle"
-    });
+    //         var c_index;
+    //         $.each(points, function(key, point) {
+    //           if(points[key][0] == c_point[0] && points[key][1] == c_point[1]) {
+    //             c_index = key
+    //           }
+    //         });
+    //         points.splice(c_index, 1)
+    //         // console.log(points)
+    //       }
+    //     }/* ,
+    //     {
+    //       text: "菜单2",
+    //       func: function () {
+    //         var id = Number($(this).attr("id"))
+    //         alert("菜单1", id)
+    //       }
+    //     } */
+    //   ]
+    // ];
+    // // 事件监听方式添加事件绑定
+    // $("body").smartMenu(userMenuData, {
+    //   name: "chatRightControl",
+    //   container: "circle"
+    // });
     // ======================================== //
     var zoom = d3.behavior.zoom()
     .scaleExtent([1, 10])
@@ -301,23 +307,6 @@
           .call(redraw)
   
     d3.select('#mapCanvas')
-            /* .on("mouseout", mouseout)  
-            .on("mouseover", function(d) {
-              console.log(d);
-              // 从d3.event获取鼠标的位置
-              var transform = d3.event;
-              var yPosition = transform.offsetY + 20;
-              var xPosition = transform.offsetX + 20;
-              // 将浮层位置设置为鼠标位置
-              var chartTooltip = d3
-                .select(".chartTooltip")
-                .style("left", xPosition + "px")
-                .style("top", yPosition + "px");
-              // 更新浮层内容
-              chartTooltip.select(".name").text('d.data.name');
-              // 移除浮层hidden样式，展示浮层
-              chartTooltip.classed("hidden", false);
-            }) */
             .on("mousemove", mousemove)  
             .on("mouseup", mouseup)  
             .on("keydown", keydown)
@@ -391,9 +380,8 @@ function dragended(d) {
     // 线上点位
     function  drawHotPoint() {
       isHot = true
-      balls = []
       container.selectAll("circle")  
-                .data(balls, function(d) { return d; })  
+                .data(points, function(d) { return d; })  
                 .enter().append("circle")  
                 .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
                 .attr("class", 'single-ball')  
@@ -433,22 +421,38 @@ function dragended(d) {
                 });
       }
 
+        var circles = !isHot ? points : newPP                                                                                                                                                                         ;
+        
         var circle = container.selectAll("circle")  
-                .data(points, function(d) { return d; });  
+                .data(circles, function(d, i) { return d; });
   
         var radius = isHot ? 6.5 : 0.01;
         var className = isHot ? 'single-ball' : 'little-point';  //  
+
         circle.enter().append("circle")  
-                .attr("r", 1e-6)  
+                .attr("r", 1e-6)
                 .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
                 .transition()  
                 .duration(750)  
                 .ease("elastic")  
                 .attr('class', className)
-                .attr("r", radius);
+                .attr("r", radius)
+                .attr("data-name", function(b, i) {return balls[i].name});
+
+        container.append('text')
+                .attr('class', 'text')
+                // .attr('x', (d, i) => scale_x(i) + 50)
+                // .attr('y', d => scale_y(d) + 20)
+                .text(function(b, i) {return balls.indexOf()})
+                .attr("font-size", "14px")
+                .attr("fill", "blue");  // 放circle内容
+                
+
+        // container.selectAll("circle.single-ball").data(balls, function(d) { return d.data; });
+        // console.log(container.selectAll("circle.single-ball"))
 
         container.selectAll("circle.single-ball").on("mouseover", function(d) {
-        // console.log(d);
+        console.log(d);
               // 从d3.event获取鼠标的位置
               var transform = d3.event;
               var yPosition = transform.offsetY + 20;
@@ -459,7 +463,8 @@ function dragended(d) {
                 .style("left", xPosition + "px")
                 .style("top", yPosition + "px");
               // 更新浮层内容
-              chartTooltip.select(".name").text(d[0]);
+              chartTooltip.select(".name").text($(this).attr('data-name'));
+              // console.log(this.text)
               // 移除浮层hidden样式，展示浮层
               chartTooltip.classed("hidden", false);
       })
@@ -484,22 +489,42 @@ function dragended(d) {
   
     //鼠标点击--增加一个新热点  
     function mousedown() {
-      console.log(d3.mouse(container.node()));
-      var pos = {position: d3.mouse(container.node())}
+      
         //没有开启编辑  
         // console.log(points)
         if(!isDrawingLine) return;
         points.push(selected = dragged = d3.mouse(container.node()));
         if(isHot) {
           // points = []
-          points.push(selected = dragged = pos);
+          // if(points.length == balls.length) return;
+          d3.selectAll("circle.little-point").remove();
+         
+          if(newPP.length == balls.length) {isDrawingLine = false; return;}
+          // pos.data = balls
+          // for(var i=0;i<balls.length; i++) {
+          //   var pos = {}
+          //   var pt = d3.mouse(container.node())
+          //   // pos.data = balls[i]
+          //   newPP.push({position: pt, data: balls[i]});
+          // }
+          newPP.push(selected = dragged = d3.mouse(container.node()));
         }
         redraw();
+        // console.log(newPP)
     }
     // 双击结束绘制
     function dblclick() {
       isDrawingLine = false;
-      // d3.selectAll("circle.little-point").remove();
+      d3.selectAll("circle.little-point").remove();
+      var newPoints = []
+      $.each(points, function(key, pt) {
+        if(pt.data != undefined) {
+          newPoints.push(pt)
+        }
+      });
+      // newPoints = balls
+      points = newPoints
+      console.log(points)
       d3.select("path").style("stroke-dasharray",null)
     }
   
