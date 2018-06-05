@@ -1,0 +1,53 @@
+.svg-opt-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.svg-opt-bar.hidden {display: none;}
+.svg-opt-bar .hide {display: none;}
+
+rect {
+  fill: none;
+  pointer-events: all;
+}
+
+circle, .line {
+  fill: none;
+  stroke: #ff7f0e;
+  stroke-width: 2px;
+}
+
+.circle-group, circle {
+  fill: #fff;
+  cursor: move;
+}
+
+.selected {
+  fill: #ff7f0e;
+  stroke: #ff7f0e;
+}
+
+.tooltip {
+  position: absolute;
+  width: 120px;
+  height: auto;
+  padding: 8px;
+  color: #fff;
+  box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 2px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.tooltip.hidden {
+  display: none;
+}
+
+.tooltip p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  word-wrap: break-word;
+}

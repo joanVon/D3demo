@@ -1,0 +1,67 @@
+.svg-opt-bar {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  left: 10px;
+  height: 45px;
+  line-height: 44px;
+  color: #fff;
+  padding-left: 12px;
+  background: #666;
+}
+
+.svg-opt-bar a {cursor: pointer;}
+
+.svg-opt-bar.hidden {display: none;}
+.svg-opt-bar .hide {display: none;}
+
+.svg-wrap {padding-top: 45px;}
+svg.main-svg {
+  fill: none;
+}
+svg.main-svg rect {
+  fill: none;
+  pointer-events: all;
+}
+
+svg.main-svg circle, 
+svg.main-svg .line {
+  fill: none;
+  stroke: #ff7f0e;
+  stroke-width: 2px;
+}
+
+svg.main-svg .circle-group, 
+svg.main-svg circle {
+  fill: #fff;
+  cursor: move;
+}
+
+svg.main-svg .selected {
+  fill: #ff7f0e;
+  stroke: #ff7f0e;
+}
+
+.svg-point-tooltip {
+  position: absolute;
+  width: 120px;
+  height: auto;
+  padding: 8px;
+  color: #fff;
+  box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 2px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.svg-point-tooltip.hidden {
+  display: none;
+}
+
+.svg-point-tooltip p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  word-wrap: break-word;
+}

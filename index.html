@@ -1,147 +1,155 @@
-<!DOCTYPE html>  
-<meta charset="utf-8">  
-<title>Spline Editor</title>  
-<style>  
-  
-    body {  
-        font: 13px sans-serif;  
-        position: relative;  
-        /* width: 960px;  
-        height: 500px;   */
-    }  
-  
-    form {  
-        position: absolute;  
-        bottom: 10px;  
-        left: 10px;  
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Spline Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<style>
+    /* body {
+        position: relative;
+        width: 960px;
+        height: 500px;
+    } */
+    /* * {margin: 0; padding: 0;} */
+
+    #mapCanvas {
+        position: relative;
+        width: 960px;
+        height: 500px;
     }
-  
-    circle,  
-    .line {  
-        fill: none;  
-        stroke: steelblue;  
-        stroke-width: 1.5px;  
-    }  
-  
-    circle {  
-        fill: #fff;  
-        fill-opacity: .2;  
-        cursor: move;  
-    }  
-  
-    .selected {  
-        fill: #FF6666;  
-        stroke: #ff7f0e;  
-    } 
-    ul, li {list-style: none;}
-    li {cursor: pointer;} 
-  
+
+    .svg-opt-bar {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    rect {
+        fill: none;
+        pointer-events: all;
+    }
+
+    circle,
+    .line {
+        fill: none;
+        stroke: #ff7f0e;
+        stroke-width: 2px;
+    }
+
+    .circle-group, circle {
+        fill: #fff;
+        /* fill-opacity: .2; */
+        cursor: move;
+    }
+
+    .selected {
+        fill: #ff7f0e;
+        stroke: #ff7f0e;
+    }
+
+    .tooltip {
+        position: absolute;
+        width: 120px;
+        height: auto;
+        padding: 8px;
+        color: #fff;
+        box-sizing: border-box;
+        background-color: rgba(0, 0, 0, 0.7);;
+        border-radius: 2px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+    }
+
+    .tooltip.hidden {
+        display: none;
+    }
+
+    .tooltip p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 20px;
+        word-wrap: break-word;
+    }
 </style>
-<form>
-    <!-- <ul id="dragList">
-        <li>point1</li>
-        <li>point2</li>
-        <li>point3</li>
-        <li>point4</li>
-        <li>point5</li>
-        <li>point6</li>
-    </ul> -->
-    <label for="interpolate">样式:</label>  
-    <select id="interpolate"></select><br>  
-  
-    <input type='button' class='btn-text' id='gis_del' value='删除' />  
-    <input type='button' class='btn-text' id='gis_edit' value='编辑' />  
-    <input type='button' class='btn-text' id='drag_circle' value='画点' />  
-    <input type='button' class='btn-text' id='drag_line' value='画线' />  
-</form>
-<script src="./js/jq.js"></script>
-<script src="http://d3js.org/d3.v3.min.js"></script> 
 
-<script>  
-  
-    // var width = 960,  
-    //     height = 500;
+<body>
+    <div id="mapCanvas">
+        <div class="svg-opt-bar">
+            <!-- <label for="interpolate">Interpolate:</label> -->
+            <!-- <select id="interpolate"></select> -->
+        </div>
+    </div>
 
-    var margin = {top: -5, right: -5, bottom: -5, left: -5},
-        width = 1280 - margin.left - margin.right,
-        height = 768 - margin.top - margin.bottom;
-  
-    var points = []  
+    <script src="./js/jq.js"></script>
+    <script src="http://d3js.org/d3.v3.js"></script>
+</body>
 
-    var dragged = null;     // 拖拽的点位  
-    var selected = points[0];   // 当前选中的点位  
-    var lineSelect = false;  // 线路选中  
-  
-    var isDrawingLine = false;  // 是否编辑状态  
-    var gis_edit = false;  
+<script>
+    var margin = { top: -5, right: -5, bottom: -5, left: -5 },
+        width = document.getElementById('mapCanvas').clientWidth - margin.left - margin.right,
+        height = document.getElementById('mapCanvas').clientHeight - margin.top - margin.bottom;
 
-    // 拖拽安放
-    // $("#dragList li").on('click', function(){  
-    //     mousedown()
-    // });
-  
-    // 绘图
-    $("#drag_line").click(function(){  
-        drowLines()
+    $('#mapCanvas').append('<div class="tooltip hidden"><p><strong class="name"></strong></p></div>');
+
+    // 假设监控点列表
+    var dataPoints = [
+        { id: 1, name: 'c1' },
+        { id: 2, name: 'c2' },
+        { id: 3, name: 'c3' },
+        { id: 4, name: 'c4' },
+        { id: 5, name: 'c5' }
+    ]
+    var pointCount = dataPoints.length + 1
+    var points = d3.range(1, pointCount).map(function (i) {
+        return [i * width / pointCount, 50];
     });
-    $("#drag_circle").click(function(){  
-        if(isDrawingLine){
-            isDrawingLine = false;  
-        }else {  
-            isDrawingLine = true;  
-        }
-    });
-  
-    // 编辑图片
-    $("#gis_edit").click(function(){  
-        //removeHotPoint();  
-        if(gis_edit){  
-            gis_edit = false;  
-  
-            d3.selectAll("circle").remove();  
-            d3.select("path").style("stroke-dasharray",null)  
-        }else {  
-            gis_edit = true;  
-        }  
-    });  
-  
-    // 清空画布
-    $("#gis_del").click(function(){
-        points = [];  
-        d3.selectAll("circle").remove();  
-        d3.select("path").remove()
-        // redraw();
-    });
+
+    var dragged = null,
+        selected = points[0];
 
     var zoom = d3.behavior.zoom()
-    .scaleExtent([1, 10])
-    .on("zoom", zoomed);
-
+        .scaleExtent([1, 10])
+        .on("zoom", zoomed);
     var drag = d3.behavior.drag()
-        .origin(function(d) { return d; })
+        .origin(function (d) { return d; })
         .on("dragstart", dragstarted)
         .on("drag", dragged)
         .on("dragend", dragended);
 
-    // ===================================  ================================= //
-  
-    var line = d3.svg.line();  
-  
-    var svg = d3.select("body").append("svg")
-            .attr("width", width)  
-            .attr("height", height) 
-            // .attr("tabindex", 1)
-            // .call(zoom).on('dblclick.zoom', null)  // 禁用双击缩放
-            // .on("mousedown", mousedown)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
-            // .call(zoom)
-            .call(zoom).on('dblclick.zoom', null)  // 禁用双击缩放
-            .on("mousedown", mousedown);
+    /* interpolate: 
+        linear - 线性插值
+        linear-closed - 线性插值，封闭起点和终点形成多边形
+        step - 步进插值，曲线只能沿x轴和y轴交替伸展
+        step-before - 步进插值，曲线只能沿y轴和x轴交替伸展
+        step-after - 同step
+        basis - B样条插值
+        basis-open - B样条插值，起点终点不相交
+        basis-closed - B样条插值，连接起点终点形成多边形
+        bundle - 基本等效于basis，除了有额外的tension参数用于拉直样条
+        cardinal - Cardina样条插值
+        cardinal-open - Cardina样条插值，起点终点不相交
+        cardinal-closed - Cardina样条插值，连接起点终点形成多边形
+        monotone - 立方插值，保留y方向的单调性 */
+    var line = d3.svg.line().interpolate('monotone');  // 默认线路样式 插值模式三次插值，保留y的单调性
 
-  var container = svg.append("g");
+    var svg = d3.select("#mapCanvas").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
+        .call(zoom).on('dblclick.zoom', null);
 
-  container.attr("class", "ba-image")
+    svg.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+    // .on("mousedown", mousedown);
+
+    var container = svg.append("g");
+
+    container.attr("class", "ba-image")
         .append("image")
         .attr("xlink:href", "./static/bg.jpg")
         .attr("x", "0")
@@ -149,217 +157,160 @@
         .attr("width", width)
         .attr("height", height)
 
-  // container.append("g")
-  //       .append("path")
-    svg.append("path")  
-          .datum(points)  
-          .attr("class", "line")  
-          .call(redraw);  
-  
-    d3.select(window)  
-            .on("mousemove", mousemove)  
-            .on("mouseup", mouseup)  
-            .on("keydown", keydown)
-            .on("dblclick", dblclick);  
-  
-/* linear - 线性插值
-linear-closed - 线性插值，封闭起点和终点形成多边形
-step - 步进插值，曲线只能沿x轴和y轴交替伸展
-step-before - 步进插值，曲线只能沿y轴和x轴交替伸展
-step-after - 同step
-basis - B样条插值
-basis-open - B样条插值，起点终点不相交
-basis-closed - B样条插值，连接起点终点形成多边形
-bundle - 基本等效于basis，除了有额外的tension参数用于拉直样条
-cardinal - Cardina样条插值
-cardinal-open - Cardina样条插值，起点终点不相交
-cardinal-closed - Cardina样条插值，连接起点终点形成多边形
-monotone - 立方插值，保留y方向的单调性 */
-    d3.select("#interpolate")  
-            .on("change", change)  
-            .selectAll("option")  
-            .data([
-                "linear",  
-                "step-before",  
-                "step-after",  
-                "basis",  
-                "basis-open",  
-                "basis-closed",  
-                "cardinal",  
-                "cardinal-open",  
-                "cardinal-closed",  
-                "monotone"  
-            ])  
-            .enter().append("option")  
-            .attr("value", function(d) { return d; })  
-            .text(function(d) { return d; });  
-  
-    svg.node().focus();  
+    // 添加线路对象
+    container.append("path")
+        .datum(points)
+        .attr("class", "line")
+        .call(redraw)
 
-// ================================ zoom drag ============================= //
-d3.tsv("dots.tsv", dottype, function(error, dots) {
-  dot = container.append("g")
-      .attr("class", "dot")
-    .selectAll("circle")
-      .data(dots)
-    .enter().append("circle")
-      .attr("r", 5)
-      .attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; })
-      .call(drag);
-});
+    d3.select('#mapCanvas')
+        .on("mousemove", mousemove)
+        .on("mouseup", mouseup)
+        .on("keydown", keydown);
 
-function dottype(d) {
-  d.x = +d.x;
-  d.y = +d.y;
-  return d;
-}
+    container.node().focus();
 
-// 全图层缩放
-function zoomed() {
-  svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-}
 
-function dragstarted(d) {
-  d3.event.sourceEvent.stopPropagation();
-  d3.select(this).classed("dragging", true);
-}
-
-function dragged(d) {
-  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
-}
-
-function dragended(d) {
-  d3.select(this).classed("dragging", false);
-}
-
-// ================================ zoom drag ============================= //
-    // 点击线路，开启编辑模式  
-    function lineOnClick() {  
-        if(gis_edit){  
-            d3.select(this)  
-                    .style("stroke-dasharray","10 5")
-            drawHotPoint();  
-        }  
-    }  
-  
-    // 绘制线路拖动点  
-    function  drawHotPoint() {  
-        svg.selectAll("circle")  
-                .data(points, function(d) { return d; })  
-                .enter().append("circle")  
-                .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
-                .attr("r", 6.5)  
-                .attr("cx", function(d) { return d[0]; })  
-                .attr("cy", function(d) { return d[1]; });  
-    }  
-
-    function drowLines() {
-        // line(points)
-        svg.select("path")
-                .attr("d", function (d,i) {  
-                    return line(points);  
-                })  
-                .style("stroke-dasharray","10 5")  
-                .on("click", lineOnClick)      //全局鼠标点击  
-                .on("mouseover", function(d,i) {  
-                    d3.select(this).style("stroke-width",3)  
-                    lineSelect = true  
-                })  
-                .on("mouseout", function(d,i) {  
-                    d3.select(this).style("stroke-width",1)  
-                    lineSelect = false  
-                });
+    // ================================ zoom drag ============================= //
+    function zoomed() {
+        container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
-  
-    // 重新绘制折线  
-    function redraw() {  
-        /* svg.select("path")  
-                .attr("d", function (d,i) {  
-                    return line(points);  
-                })  
-                .style("stroke-dasharray","10 5")  
-                .on("click", lineOnClick)      //全局鼠标点击  
-                .on("mouseover", function(d,i) {  
-                    d3.select(this).style("stroke-width",3)  
-                    lineSelect = true  
-                })  
-                .on("mouseout", function(d,i) {  
-                    d3.select(this).style("stroke-width",1)  
-                    lineSelect = false  
-                }); */  
-  
-        var circle = svg.selectAll("circle")  
-                .data(points, function(d) { return d; });  
-  
-        circle.enter().append("circle")  
-                .attr("r", 1e-6)  
-                .on("mousedown", function(d) { selected = dragged = d; redraw(); })  
-                .transition()  
-                .duration(750)  
-                .ease("elastic")  
-                .attr("r", 6.5);  
-  
-        circle  
-                .classed("selected", function(d) { return d === selected; })  
-                .attr("cx", function(d) { return d[0]; })  
-                .attr("cy", function(d) { return d[1]; });  
-  
-        circle.exit().remove();  
-  
+    function dragstarted(d) {
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed("dragging", true);
+    }
+    function dragged(d) {
+        d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    }
+    function dragended(d) {
+        d3.select(this).classed("dragging", false);
+    }
+    // ================================ zoom drag ============================= //
+    function redraw() {
+        container.select("path")
+            .attr("d", line)
+            .style("stroke-dasharray","10 5") ;
+
+        var circlesEnter = container.selectAll("circle")
+            .data(points, function (d, i) { return dataPoints[i].name; })
+            .enter()
+            .append("g")
+            .attr("class", "circle-group")
+            .on("mousedown", function (d, i) {
+                selected = dragged = d;
+                
+                $(this).find("text").remove();
+                redraw(); 
+            }).on("mouseup", function(d, i) {
+                reNumber(circlesEnter);
+            });
+
+        circlesEnter
+            .append("circle")
+            .attr("r", 1e-6)
+            .transition()
+            .duration(750)
+            .ease("elastic")
+            .attr("r", 10.5)
+            .text(function(b, i) {return i;})
+            .style("fill", function(d, i) { return i; })
+            .attr("data-name", function (b, i) { return dataPoints[i].name });
+
+
+        reNumber(circlesEnter);  // 重置序号
+
+        container.selectAll("circle").on("mouseover", function (d) {
+            // console.log(d);
+            // 从d3.event获取鼠标的位置
+            var transform = d3.event;
+            var yPosition = transform.offsetY + 20;
+            var xPosition = transform.offsetX + 20;
+            // 将浮层位置设置为鼠标位置
+            var tooltip = d3
+                .select(".tooltip")
+                .style("left", xPosition + "px")
+                .style("top", yPosition + "px");
+            // 更新浮层内容
+            tooltip.select(".name").text($(this).attr('data-name'));
+            // console.log(this.text)
+            // 移除浮层hidden样式，展示浮层
+            tooltip.classed("hidden", false);
+        })
+            .on("mouseout", mouseout);
+
+
+        container.selectAll("circle")
+            .data(points, function (d, i) { return dataPoints[i].name; })
+            .classed("selected", function (d, i) { return d === selected;})
+            .attr("cx", function (d) { return d[0]; })
+            .attr("cy", function (d) { return d[1]; });
+
+        container.selectAll("circle")
+            .data(points, function (d, i) { return dataPoints[i].name; })
+            .exit().remove();
+
         if (d3.event) {
-            d3.event.preventDefault();  
-            d3.event.stopPropagation();  
-        }  
-    }  
-  
-    function change() {  
-        line.interpolate(this.value);  
-        redraw();  
-    }  
-  
-    //鼠标点击--增加一个新点位  
-    function mousedown() {
-        //没有开启编辑  
-        if(!isDrawingLine) return;
-        points.push(selected = dragged = d3.mouse(svg.node()));  
-        redraw();  
+            d3.event.preventDefault();
+            d3.event.stopPropagation();
+        }
     }
 
-    // 双击结束绘制
-    function dblclick() {
-      isDrawingLine = false;
+    function reNumber(enterEle) {
+        enterEle.append("text")
+                .attr('class', 'circle-text')
+                .attr("x",function(d){return d[0];})
+                .attr("y",function(d){return d[1];})
+                .attr("dy", 5)
+                // .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+                .attr("text-anchor", "middle")
+                .text(function(d,i) { return i+1; })
+                .attr("font-weight", "700")
+                .attr("font-size", "16px")
+                .attr("fill", "#000");
     }
-  
-    //鼠标移动--拖动点位  
-    function mousemove() {  
-        if (!dragged) return;  
-        var m = d3.mouse(svg.node());  
-        dragged[0] = Math.max(0, Math.min(width, m[0]));  
-        dragged[1] = Math.max(0, Math.min(height, m[1]));  
-        redraw();  
-    }  
-  
-    //鼠标抬起-停止移动  
-    function mouseup() {  
-        if (!dragged) return;  
-        mousemove();  
-        dragged = null;  
-    }  
-  
-    //处理键盘事件  
-    function keydown() {  
-        if (!selected) return;  
-        switch (d3.event.keyCode) {  
-            case 8: // backspace  
-            case 46: { // delete  
-                var i = points.indexOf(selected);  
-                points.splice(i, 1);  
-                selected = points.length ? points[i > 0 ? i - 1 : 0] : null;  
-                redraw();  
-                break;  
-            }  
-        }  
-    }  
-  
-</script>  
+
+
+    /* function change() {
+        line.interpolate(this.value);
+        redraw();
+    } */
+
+    // function mousedown() {
+    //     points.push(selected = dragged = d3.mouse(container.node()));
+    //     redraw();
+    // }
+
+    function mousemove() {
+        if (!dragged) return;
+        var m = d3.mouse(container.node());
+        dragged[0] = Math.max(0, Math.min(width, m[0]));
+        dragged[1] = Math.max(0, Math.min(height, m[1]));
+        redraw();
+    }
+    function mouseout() {
+        d3.select(".tooltip").classed("hidden", true);
+    }
+
+    function mouseup() {
+        if (!dragged) return;
+        mousemove();
+        dragged = null;
+    }
+
+    function keydown() {
+        if (!selected) return;
+        switch (d3.event.keyCode) {
+            case 8: // backspace
+            case 46: { // delete
+                var i = points.indexOf(selected);
+                points.splice(i, 1);
+                selected = points.length ? points[i > 0 ? i - 1 : 0] : null;
+                redraw();
+                break;
+            }
+        }
+    }
+
+</script>
+
+</html>

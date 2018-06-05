@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Spline Editor</title>
+<style>
+
+    body {
+        font: 13px sans-serif;
+        position: relative;
+        width: 960px;
+        height: 500px;
+    }
+
+    form {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+    }
+
+
+    circle,
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 1.5px;
+    }
+
+    circle {
+        fill: #fff;
+        fill-opacity: .2;
+        cursor: move;
+    }
+
+    .selected {
+        fill: #ff7f0e;
+        stroke: #ff7f0e;
+    }
+
+</style>
+<form>
+    <label for="interpolate">样式:</label>
+    <select id="interpolate"></select><br>
+
+    <input type='button' class='btn-text' id ='gis_del' value='删除' />
+    <input type='button' class='btn-text' id ='gis_edit' value='编辑' />
+    <input type='button' class='btn-text' id ='drag_line' value='绘线' />
+    <input type='button' class='btn-text' id ='rect' value='矩形' />
+</form>
+<script src="d3.v3.min.js"></script>
+<script src="jquery-1.9.1.js"></script>
+<script>
+
+    var width = 960,
+            height = 500;
+
+    var points = []
+
+
+    var dragged = null;     //拖拽的热点
+    var selected = points[0];   //当前选中的热点
+    var lineSelect = false; //线路选中
+
+    var isDrawingLine = false;
+    var gis_edit = false;
+
+$("#rect").click(function(){
+
+if(isDrawingLine){
+    isDrawingLine = false;
+}else {
+    isDrawingLine = true;
+}
+
+});
+
+    $("#drag_line").click(function(){
+
+        if(isDrawingLine){
+            isDrawingLine = false;
+        }else {
+            isDrawingLine = true;
+        }
+
+    });
+
+    $("#gis_edit").click(function(){
+        //removeHotPoint();
+        if(gis_edit){
+            gis_edit = false;
+
+            d3.selectAll("circle").remove();
+            d3.select("path").style("stroke-dasharray",null)
+        }else {
+            gis_edit = true;
+        }
+    });
+
+    $("#gis_del").click(function(){
+
+        points = [];
+        redraw();
+
+    });
+
+    var line = d3.svg.line();
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("tabindex", 1)
+            .on("mousedown", mousedown);
+
+
+    svg.append("path")
+            .datum(points)
+            .attr("class", "line")
+            .call(redraw);
+
+    d3.select(window)
+            .on("mousemove", mousemove)
+            .on("mouseup", mouseup)
+            .on("keydown", keydown);
+
+    d3.select("#interpolate")
+            .on("change", change)
+            .selectAll("option")
+            .data([
+                "linear",
+                "step-before",
+                "step-after",
+                "basis",
+                "basis-open",
+                "basis-closed",
+                "cardinal",
+                "cardinal-open",
+                "cardinal-closed",
+                "monotone"
+            ])
+            .enter().append("option")
+            .attr("value", function(d) { return d; })
+            .text(function(d) { return d; });
+
+    svg.node().focus();
+
+
+    //点击线路，开启编辑模式
+    function lineOnClick() {
+        if(gis_edit){
+            d3.select(this)
+                    .style("stroke-dasharray","10 5")
+
+            drawHotPoint();
+        }
+    }
+
+    //绘制线路拖动点
+    function  drawHotPoint() {
+        svg.selectAll("circle")
+                .data(points, function(d) { return d; })
+                .enter().append("circle")
+                .on("mousedown", function(d) { selected = dragged = d; redraw(); })
+                .attr("r", 6.5)
+                .attr("cx", function(d) { return d[0]; })
+                .attr("cy", function(d) { return d[1]; });
+    }
+
+    //重新绘制折线
+    function redraw() {
+        svg.select("path")
+                .attr("d", function (d,i) {
+                    return line(points);
+                })
+                .style("stroke-dasharray","10 5")
+                .on("click", lineOnClick)      //全局鼠标点击
+                .on("mouseover", function(d,i) {
+                    d3.select(this).style("stroke-width",3)
+                    lineSelect = true
+                })
+                .on("mouseout", function(d,i) {
+                    d3.select(this).style("stroke-width",1)
+                    lineSelect = false
+                });
+
+        var circle = svg.selectAll("circle")
+                .data(points, function(d) { return d; });
+
+        circle.enter().append("circle")
+                .attr("r", 1e-6)
+                .on("mousedown", function(d) { selected = dragged = d; redraw(); })
+                .transition()
+                .duration(750)
+                .ease("elastic")
+                .attr("r", 6.5);
+
+        circle
+                .classed("selected", function(d) { return d === selected; })
+                .attr("cx", function(d) { return d[0]; })
+                .attr("cy", function(d) { return d[1]; });
+
+        circle.exit().remove();
+
+        if (d3.event) {
+            d3.event.preventDefault();
+            d3.event.stopPropagation();
+        }
+    }
+
+    function change() {
+        line.interpolate(this.value);
+        redraw();
+    }
+
+    //鼠标点击--增加一个新热点
+    function mousedown() {
+
+        //没有开启编辑
+        if(!isDrawingLine) return;
+
+        points.push(selected = dragged = d3.mouse(svg.node()));
+        redraw();
+    }
+
+    //鼠标移动--拖动热点
+    function mousemove() {
+        if (!dragged) return;
+        var m = d3.mouse(svg.node());
+        dragged[0] = Math.max(0, Math.min(width, m[0]));
+        dragged[1] = Math.max(0, Math.min(height, m[1]));
+        redraw();
+    }
+
+    //鼠标抬起-停止移动
+    function mouseup() {
+        if (!dragged) return;
+        mousemove();
+        dragged = null;
+    }
+
+    //处理键盘事件
+    function keydown() {
+        if (!selected) return;
+        switch (d3.event.keyCode) {
+            case 8: // backspace
+            case 46: { // delete
+                var i = points.indexOf(selected);
+                points.splice(i, 1);
+                selected = points.length ? points[i > 0 ? i - 1 : 0] : null;
+                redraw();
+                break;
+            }
+        }
+    }
+
+</script>

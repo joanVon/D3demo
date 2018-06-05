@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>DEMO SVG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<style>
+  #svgCotent {
+    position: relative;
+    width: 1280px;
+    height: 768px;
+    border: 1px solid #999;
+    overflow: hidden;
+  }
+
+  path {
+    fill: none;
+    stroke-width: 1px;
+    stroke: tomato；
+  }
+</style>
+
+<body>
+  <div id="svgCotent">
+    <svg></svg>
+  </div>
+
+  <script src="./js/jq.js"></script>
+  <!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
+
+  <script>
+
+    (function () {
+      var margin = { top: -5, right: -5, bottom: -5, left: -5 },
+        width = $('#svgCotent').width() - margin.left - margin.right,
+        height = $('#svgCotent').height() - margin.top - margin.bottom;
+
+      var svg = document.querySelector("svg")
+      svg.setAttribute("width", innerWidth)
+      svg.setAttribute("height", innerHeight)
+      // .attr("tabindex", 1)
+      // .append("g")
+      // .attr("transform", "translate(" + margin.left + "," + margin.right + ")");
+      // .call(zoom)
+      // .call(zoom).on('dblclick.zoom', null);
+
+      var rect;
+      svg.addEventListener('mousedown', function (e) {
+        rect = document.createElementNS(this.namespaceURI, "path");
+        rect._d = "M" + e.clientX + "," + e.clientY;
+        rect._d2 = "H" + e.clientX + "Z";
+        this.appendChild(rect);
+      }, false);
+
+      svg.addEventListener('mousemove', function (e) {
+        if (rect) {
+          var d = rect._d + "H" + e.clientX + "V" + e.clientY + rect._d2;
+          rect.setAttribute("d", d);
+        }
+      }, false);
+      svg.addEventListener('mouseup', function () {
+        rect = null;
+      }, false);
+      svg.addEventListener('mouseleave', function () {
+        rect = null;
+      }, false);
+    })
+
+  </script>
+</body>
+
+</html>

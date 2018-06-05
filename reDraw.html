@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Page Title</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" media="screen" href="./css/orbit.css" />
+  <!-- <script src="main.js"></script> -->
+</head>
+<style>
+  #mapCanvas {
+    position: relative;
+    width: 960px;
+    height: 500px;
+  }
+</style>
+<body>
+    <div id="mapCanvas">
+        
+    </div>
+
+    <script src="./js/jq.js"></script>
+    <!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
+    <script src="./js/orbit/d3.v3.min.js"></script>
+    <script src="./js/orbit/orbit.js"></script>
+
+
+<script>
+  var drawOrbit = new DrawOrbit(this, {
+      idName: 'mapCanvas',
+      // parentEl: '#animateDraw',
+      width: 960,
+      height: 500,
+      imgSrc: "https://image.baidu.com/search/detail?ct=503316480&z=&tn=baiduimagedetail&ipn=d&word=%E6%97%A0%E8%84%B8%E7%94%B7&step_word=&ie=utf-8&in=&cl=2&lm=-1&st=-1&cs=1533380212,1767496156&os=1446330619,863997052&simid=0,0&pn=2&rn=1&di=85417069210&ln=1970&fr=&fmq=1527563650401_R&ic=0&s=undefined&se=&sme=&tab=0&width=&height=&face=undefined&is=0,0&istype=2&ist=&jit=&bdtype=0&spn=0&pi=0&gsm=0&hs=2&objurl=http%3A%2F%2Fimg4.duitang.com%2Fuploads%2Fitem%2F201402%2F25%2F20140225171138_54uGn.thumb.700_0.jpeg&rpstart=0&rpnum=0&adpicid=0",
+      dataPoints: [
+      { id: 1, name: 'ca' },
+      { id: 2, name: 'cs' },
+      { id: 3, name: 'cd' },
+      { id: 4, name: 'cf' },
+      { id: 'qwqw', name: 'cfgfdhg' },
+      { id: 'wqwq1', name: 'cfsdsad' },
+      { id: 'wqwq2', name: 'cfgfg' },
+      { id: 'wqwq3', name: 'cfbvnh' },
+      { id: 'wqwq4', name: 'cf8768' },
+      { id: 'wqwq5', name: 'cfhgh' },
+      { id: 'wqwq6', name: 'cf6567' },
+      { id: 'wqwq7', name: 'cfghfh' },
+      { id: 'wqwq8', name: 'cf4324' },
+      { id: 'wqwq9', name: 'cf43243' },
+      { id: 'wqwq0', name: 'cf4' },
+      { id: 'wqwq34', name: 'cf3' },
+      { id: 5, name: 'cg' }
+      ],
+      // toolBar: true,
+      // toolBarControls: ["download"],
+    });
+</script>
+    
+</body>
+</html>
