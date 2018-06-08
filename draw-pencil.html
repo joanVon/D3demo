@@ -61,19 +61,18 @@
 <body>
   <div id="canvasMap">
     <svg width="960" height="500">
-      <rect fill="none" width="100%" height="100%"></rect>
+      <!-- <rect fill="none" width="100%" height="100%"></rect> -->
     </svg>
 
-    <img id="cacheImage" alt="" style="display: none;" />
     <div class="toolbar">
       <span class="toolbar-opt" id="svgPencil" onclick="activePencil()">画笔</span>
       <span class="toolbar-opt active" id="svgDrag" onclick="activeSVGDrag()">拖拽</span>
-      <span class="toolbar-opt" id="svgClear" onclick="clearSVG()">清空画布</span>
 
       <span class="toolbar-opt" id="svgEdit" onclick="editSVG()">编辑</span>
       <span class="toolbar-opt" id="svgRemove" onclick="removeSelector()">删除选中</span>
+      <span class="toolbar-opt" id="svgClear" onclick="clearSVG()">清空画布</span>
 
-      <span id="svgSaveAsPng" onclick="saveAsPng()" style="float: right;">保存PNG</span>
+      <!-- <span id="svgSaveAsPng" onclick="saveAsPng()" style="float: right;">保存PNG</span> -->
     </div>
   </div>
 
@@ -103,6 +102,8 @@
 
 
     var svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height)
       .call(drag)
       .call(zoom).on('dblclick.zoom', null);
 
@@ -220,14 +221,6 @@
     // ======================== 操作栏END ======================== //
 
     // ======================== 全局方法 ======================== //
-    function pathSelect() {
-      container.select('path')
-        .style("stroke-dasharray", "10 5")
-        .on("click", function (d) {
-          d3.select(this)
-            .style("stroke", "#ffffff")
-        });
-    }
     // 拖拽定位
     function dragsubject() {
       d3.event.subject = [d3.event.x, d3.event.y];
